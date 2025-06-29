@@ -60,7 +60,7 @@ The token to use to access the destination repository. Defaults to the source to
 
 ### `tag`
 
-The tag to sync from the source repository. Defaults to latest tag.
+The tag to sync from the source repository. Defaults to the triggering tag or the latest tag.
 
 ### `destination-tag`
 

@@ -18,7 +18,7 @@ inputs:
     description: "The token to use to access the destination repository. Defaults to the source token. Needs write permissions."
     required: false
   tag:
-    description: "The tag to sync from the source repository. Defaults to latest tag."
+    description: "The tag to sync from the source repository. Defaults to the triggering tag or the latest tag."
     required: false
   destination-tag:
     description: "The tag to sync to the destination repository. Defaults to the source tag"

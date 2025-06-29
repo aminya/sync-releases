@@ -85,12 +85,18 @@ async function createRelease(
 
 async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string): Promise<ReleaseData | undefined> {
   try {
-    // check if release exists
-    const release = await octo.rest.repos.getReleaseByTag({
-      owner: repo.owner,
-      repo: repo.repo,
-      tag: tag,
-    });
+    const release =
+      tag === "latest"
+        ? await octo.rest.repos.getLatestRelease({
+          owner: repo.owner,
+          repo: repo.repo,
+        })
+        : await octo.rest.repos.getReleaseByTag({
+          owner: repo.owner,
+          repo: repo.repo,
+          tag,
+        });
+
     // If release exists, return it
     if (release.status === 200) {
       return release.data;
