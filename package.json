@@ -1,0 +1,31 @@
+{
+  "name": "sync-releases",
+  "version": "1.0.0",
+  "description": "Sync releases between two repositories",
+  "main": "dist/index.js",
+  "scripts": {
+    "build.tsc": "tsc --noEmit --pretty",
+    "build.esbuild": "esbuild --bundle --platform=node --target=node20 --sourcemap --minify ./src/index.ts --outfile=dist/index.js",
+    "build": "run-p build.*",
+    "dev": "run-p 'build.* --watch'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "@octokit/core": "^7.0.2",
+    "@octokit/plugin-rest-endpoint-methods": "^16.0.0",
+    "@octokit/plugin-retry": "^8.0.1",
+    "node-downloader-helper": "^2.1.9"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.6",
+    "@types/node": "^20",
+    "esbuild": "^0.25.5",
+    "npm-run-all2": "^8.0.4",
+    "typescript": "^5.8.3"
+  }
+}

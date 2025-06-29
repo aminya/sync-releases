@@ -1,0 +1,29 @@
+name: "Sync Releases"
+description: "Sync releases between two repositories"
+branding:
+  icon: "copy"
+  color: "blue"
+
+inputs:
+  source:
+    required: false
+    description: "The source owner/repository. Defaults to the current repository if destination is provided."
+  destination:
+    required: false
+    description: "The destination owner/repository. Defaults to the current repository if source is provided."
+  token:
+    description: "The token to use to access the source repository. Defaults to GITHUB_TOKEN. Needs read permissions."
+    required: false
+  destination-token:
+    description: "The token to use to access the destination repository. Defaults to the source token. Needs write permissions."
+    required: false
+  tag:
+    description: "The tag to sync from the source repository. Defaults to latest tag."
+    required: false
+  destination-tag:
+    description: "The tag to sync to the destination repository. Defaults to the source tag"
+    required: false
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
