@@ -1,88 +1,111 @@
-import { getInput } from "@actions/core";
 import { info } from "console";
+import { getInput } from "@actions/core";
 
 export function getRepositoriesNames(): [RepositoryName, RepositoryName] {
-  let sourceInput = getInput("source", { required: false });
-  let destInput = getInput("destination", { required: false });
-  const currentRepo = process.env.GITHUB_REPOSITORY;
+    let sourceInput = getInput("source", { required: false });
+    let destInput = getInput("destination", { required: false });
+    const currentRepo = process.env.GITHUB_REPOSITORY;
 
-  // Validate that either source or destination is provided
-  // if only one is provided, check that it's different from the current repository
-  if (!sourceInput && !destInput) {
-    throw new Error("Either source or destination or both should be provided.");
-  } else if (sourceInput === currentRepo && !destInput) {
-    throw new Error("Source repository cannot be the same as the current repository when destination is not provided.");
-  } else if (destInput === currentRepo && !sourceInput) {
-    throw new Error("Destination repository cannot be the same as the current repository when source is not provided.");
-  } else if (sourceInput === destInput) {
-    throw new Error("Source and destination repositories cannot be the same.");
-  } else if (sourceInput && !destInput && currentRepo) {
-    destInput = currentRepo;
-  } else if (!sourceInput && destInput && currentRepo) {
-    sourceInput = currentRepo;
-  }
-
-  if (!sourceInput || !destInput) {
-    throw new Error("Could not determine source or destination repository.");
-  }
-
-  // Validate the source and destination repositories format
-  const [sourceRepo, destRepo] = [sourceInput, destInput].map((input) => {
-    const repoInfo = parseOwnerRepo(input);
-    if (repoInfo === undefined) {
-      throw new Error("Invalid repository. Please provide 'source' or 'destination' input in the format 'owner/repo'.");
+    // Validate that either source or destination is provided
+    // if only one is provided, check that it's different from the current repository
+    if (!sourceInput && !destInput) {
+        throw new Error(
+            "Either source or destination or both should be provided.",
+        );
+    } else if (sourceInput === currentRepo && !destInput) {
+        throw new Error(
+            "Source repository cannot be the same as the current repository when destination is not provided.",
+        );
+    } else if (destInput === currentRepo && !sourceInput) {
+        throw new Error(
+            "Destination repository cannot be the same as the current repository when source is not provided.",
+        );
+    } else if (sourceInput === destInput) {
+        throw new Error(
+            "Source and destination repositories cannot be the same.",
+        );
+    } else if (sourceInput && !destInput && currentRepo) {
+        destInput = currentRepo;
+    } else if (!sourceInput && destInput && currentRepo) {
+        sourceInput = currentRepo;
     }
-    return repoInfo;
-  });
 
-  info(`Source repo: ${sourceRepo.owner}/${sourceRepo.repo}
+    if (!sourceInput || !destInput) {
+        throw new Error(
+            "Could not determine source or destination repository.",
+        );
+    }
+
+    // Validate the source and destination repositories format
+    const [sourceRepo, destRepo] = [sourceInput, destInput].map((input) => {
+        const repoInfo = parseOwnerRepo(input);
+        if (repoInfo === undefined) {
+            throw new Error(
+                "Invalid repository. Please provide 'source' or 'destination' input in the format 'owner/repo'.",
+            );
+        }
+        return repoInfo;
+    });
+
+    info(`Source repo: ${sourceRepo.owner}/${sourceRepo.repo}
 Destination repo: ${destRepo.owner}/${destRepo.repo}`);
 
-  return [sourceRepo, destRepo];
+    return [sourceRepo, destRepo];
 }
 
 export type RepositoryName = {
-  owner: string;
-  repo: string;
+    owner: string;
+    repo: string;
 };
 
 function parseOwnerRepo(input: string | undefined): RepositoryName | undefined {
-  if (!input) {
-    return undefined;
-  }
-  const [owner, repo] = input.split("/");
-  return { owner, repo };
+    if (!input) {
+        return undefined;
+    }
+    const [owner, repo] = input.split("/");
+    return { owner, repo };
 }
 
 export function getTagNames(): [string | "latest", string | undefined] {
-  // Get the tag to sync
-  const sourceTagInput = getInput("tag", { required: false }) || process.env.GITHUB_REF;
-  const destinationTagInput = getInput("destination-tag", { required: false }) || sourceTagInput;
+    // Get the tag to sync
+    const sourceTagInput =
+        getInput("tag", { required: false }) || process.env.GITHUB_REF;
+    const destinationTagInput =
+        getInput("destination-tag", { required: false }) || sourceTagInput;
 
-  const sourceTag = parseTag(sourceTagInput) ?? "latest";
-  // If the destination tag is "latest", let the source tag name determine the destination tag name later
-  const destinationTag = destinationTagInput === "latest" ? undefined : parseTag(destinationTagInput);
+    const sourceTag = parseTag(sourceTagInput) ?? "latest";
+    // If the destination tag is "latest", let the source tag name determine the destination tag name later
+    const destinationTag =
+        destinationTagInput === "latest"
+            ? undefined
+            : parseTag(destinationTagInput);
 
-  info(`Source tag: '${sourceTag}'
-Destination tag: '${destinationTag ?? 'default to source tag'}'`);
-  return [sourceTag, destinationTag];
+    info(`Source tag: '${sourceTag}'
+Destination tag: '${destinationTag ?? "default to source tag"}'`);
+    return [sourceTag, destinationTag];
 }
 
 function parseTag(tag: string | undefined): string | undefined {
-  if (!tag) {
-    return undefined;
-  }
-  // trim the refs/tags/ prefix if it exists
-  return tag.startsWith("refs/tags/") ? tag.substring("refs/tags/".length) : tag;
+    if (!tag) {
+        return undefined;
+    }
+    // trim the refs/tags/ prefix if it exists
+    return tag.startsWith("refs/tags/")
+        ? tag.substring("refs/tags/".length)
+        : tag;
 }
 
 export function getGitHubTokens(): [string, string] {
-  const sourceToken = getInput("token", { required: false }) || process.env.GITHUB_TOKEN;
-  const destinationToken = getInput("destination-token", { required: false }) || sourceToken;
+    const sourceToken =
+        getInput("token", { required: false }) || process.env.GITHUB_TOKEN;
+    const destinationToken =
+        getInput("destination-token", { required: false }) || sourceToken;
 
-  if (!sourceToken || !destinationToken) {
-    throw new Error("Could not determine source or destination GitHub token.");
-  }
+    if (!sourceToken || !destinationToken) {
+        throw new Error(
+            "Could not determine source or destination GitHub token.",
+        );
+    }
 
-  return [sourceToken, destinationToken];
+    return [sourceToken, destinationToken];
 }

@@ -1,5 +1,14 @@
 {
-    "cSpell.words": [
-        "Octo"
-    ]
+    "[json]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "biome.suggestInstallingGlobally": false,
+    "cSpell.words": ["Octo"],
+    "editor.formatOnSave": true
 }
