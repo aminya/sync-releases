@@ -57,7 +57,9 @@ async function main() {
         await syncRelease(
             sourceRelease,
             destRelease,
+            sourceOcto,
             destOcto,
+            sourceRepo,
             destRepo,
             tokens[0],
         );

@@ -62,10 +62,7 @@ export async function createRelease(
     octo: GitHubClient,
     destTag: string,
     destRepo: RepositoryName,
-    releaseData: Pick<
-        ReleaseData,
-        "body" | "name" | "draft" | "prerelease" | "assets"
-    >,
+    releaseData: ReleaseData,
 ): Promise<ReleaseData> {
     startGroup(
         `Creating release ${destTag} on ${destRepo.owner}/${destRepo.repo}`,
@@ -98,11 +95,13 @@ export async function createRelease(
 export async function syncRelease(
     sourceRelease: ReleaseData,
     destRelease: ReleaseData,
+    sourceOcto: GitHubClient,
     destOcto: GitHubClient,
+    sourceRepo: RepositoryName,
     destRepo: RepositoryName,
-    sourceToken: string,
+    token: string,
 ) {
-    info(
+    startGroup(
         `Syncing release ${sourceRelease.tag_name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`,
     );
 
@@ -111,7 +110,7 @@ export async function syncRelease(
 
     // Sync the assets from the source release to the destination release
     const assetPromises = sourceRelease.assets.map(async (asset) => {
-        startGroup(
+        info(
             `Syncing asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`,
         );
 
@@ -121,13 +120,13 @@ export async function syncRelease(
         }
 
         // Download the source asset to a temporary file
-        await downloadAsset(asset, downloadDir, sourceToken);
+        await downloadAsset(asset, sourceRepo, sourceOcto, downloadDir, token);
 
         // Upload the asset to the destination release
         await uploadAsset(asset, destRelease, destRepo, destOcto, downloadDir);
-        endGroup();
     });
     await Promise.all(assetPromises);
+    endGroup();
 }
 
 async function prepareSync(
@@ -171,8 +170,26 @@ async function uploadAsset(
     });
 }
 
-async function downloadAsset(asset: Asset, downloadDir: string, token: string) {
+async function downloadAsset(
+    asset: Asset,
+    repo: RepositoryName,
+    octo: GitHubClient,
+    downloadDir: string,
+    token: string,
+) {
     info(`Downloading asset ${asset.name} from ${asset.browser_download_url}`);
+
+    const response = await octo.rest.repos.getReleaseAsset({
+        owner: repo.owner,
+        repo: repo.repo,
+        asset_id: asset.id,
+    });
+    if (response.status !== 200) {
+        throw new Error(
+            `Failed to download asset ${asset.name} from ${asset.browser_download_url}: ${response.data}`,
+        );
+    }
+
     const dl = new DownloaderHelper(asset.browser_download_url, downloadDir, {
         fileName: asset.name,
         headers: {
