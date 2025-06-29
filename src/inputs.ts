@@ -1,4 +1,5 @@
 import { getInput } from "@actions/core";
+import { info } from "console";
 
 export function getRepositoriesNames(): [RepositoryName, RepositoryName] {
   let sourceInput = getInput("source", { required: false });
@@ -34,6 +35,8 @@ export function getRepositoriesNames(): [RepositoryName, RepositoryName] {
     return repoInfo;
   });
 
+  info(`Source repo: ${sourceRepo.owner}/${sourceRepo.repo}
+Destination repo: ${destRepo.owner}/${destRepo.repo}`);
 
   return [sourceRepo, destRepo];
 }
@@ -59,6 +62,8 @@ export function getTagNames(): [string | "latest", string | undefined] {
   const sourceTag = parseTag(sourceTagInput) ?? "latest";
   const destinationTag = parseTag(destinationTagInput);
 
+  info(`Source tag: '${sourceTag}'
+Destination tag: '${destinationTag ?? 'default to source tag'}'`);
   return [sourceTag, destinationTag];
 }
 
