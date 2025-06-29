@@ -75,7 +75,7 @@ function parseTag(tag: string | undefined): string | undefined {
 }
 
 export function getGitHubTokens(): [string, string] {
-  const sourceToken = getInput("source-token", { required: false }) || process.env.GITHUB_TOKEN;
+  const sourceToken = getInput("token", { required: false }) || process.env.GITHUB_TOKEN;
   const destinationToken = getInput("destination-token", { required: false }) || sourceToken;
 
   if (!sourceToken || !destinationToken) {

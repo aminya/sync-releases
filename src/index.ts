@@ -1,4 +1,4 @@
-import { setFailed, setOutput, warning } from "@actions/core";
+import { setFailed, warning } from "@actions/core";
 import { getOctokit } from "@actions/github";
 import { RestEndpointMethodTypes } from "@octokit/plugin-rest-endpoint-methods";
 import { retry } from "@octokit/plugin-retry";
