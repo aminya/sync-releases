@@ -25,6 +25,7 @@ async function main() {
     endGroup();
 
     // Get the releases
+    startGroup("Getting releases");
     const sourceRelease = await getRelease(sourceOcto, sourceRepo, sourceTag);
     if (sourceRelease === undefined) {
       throw new Error(`Source release ${sourceTag} on ${sourceRepo.owner}/${sourceRepo.repo} does not exist`);
@@ -33,10 +34,10 @@ async function main() {
     if (destinationTag !== maybeDestinationTag) {
       info(`Destination tag: ${destinationTag}`);
     }
-
     // Get the destination release or create it if it doesn't exist
     const destRelease = await getRelease(destOcto, destRepo, destinationTag) ??
       await createRelease(destOcto, destinationTag, destRepo, sourceRelease);
+    endGroup();
 
     // Sync the release assets
     await syncRelease(sourceRelease, destRelease, destOcto, destRepo);
@@ -97,7 +98,7 @@ async function createRelease(
 
 async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string | "latest"): Promise<ReleaseData | undefined> {
   try {
-    startGroup(`Getting release ${tag} on ${repo.owner}/${repo.repo}`);
+    info(`Getting release ${tag} on ${repo.owner}/${repo.repo}`);
     const release =
       tag === "latest"
         ? await octo.rest.repos.getLatestRelease({
@@ -112,7 +113,7 @@ async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string 
 
     // If release exists, return it
     if (release.status === 200) {
-      endGroup();
+      info(`Release ${tag} on ${repo.owner}/${repo.repo} found`);
       return release.data;
     }
   } catch (error) {
@@ -120,13 +121,12 @@ async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string 
       // Release does not exist
     } else {
       // Otherwise, rethrow the error
+      console.error(error);
       const msg = `Failed to get release ${tag} on ${repo.owner}/${repo.repo}: ${error}`;
-      console.error(msg, error);
-      endGroup();
+      info(msg);
       throw new Error(msg);
     }
   }
-  endGroup();
   return undefined;
 }
 

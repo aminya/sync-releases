@@ -60,7 +60,8 @@ export function getTagNames(): [string | "latest", string | undefined] {
   const destinationTagInput = getInput("destination-tag", { required: false }) || sourceTagInput;
 
   const sourceTag = parseTag(sourceTagInput) ?? "latest";
-  const destinationTag = parseTag(destinationTagInput);
+  // If the destination tag is "latest", let the source tag name determine the destination tag name later
+  const destinationTag = destinationTagInput === "latest" ? undefined : parseTag(destinationTagInput);
 
   info(`Source tag: '${sourceTag}'
 Destination tag: '${destinationTag ?? 'default to source tag'}'`);
