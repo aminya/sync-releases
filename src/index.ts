@@ -117,8 +117,10 @@ async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string 
       return release.data;
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) {
+    if (typeof error === "object" && error !== null && "status" in error && error.status === 404) {
       // Release does not exist
+      info(`Release ${tag} on ${repo.owner}/${repo.repo} does not exist`);
+      return undefined;
     } else {
       // Otherwise, rethrow the error
       console.error(error);
