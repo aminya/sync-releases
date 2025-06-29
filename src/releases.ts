@@ -161,11 +161,32 @@ async function downloadAsset(
             accept: "application/octet-stream", // Required for downloading binary files
         },
     });
-    if (response.status !== 200) {
-        throw new Error(
-            `Failed to download asset ${asset.name} from ${asset.browser_download_url}: ${response.data}`,
-        );
+    if (response.status === 200) {
+        // TODO handle large files
+        return Buffer.from(response.data as unknown as ArrayBuffer);
+    }
+    if (response.status === 302) {
+        const location = response.headers.location;
+        info(`Redirecting to ${location} for asset ${asset.name}`);
+        if (!location) {
+            throw new Error(
+                `Failed to download asset ${asset.name} from ${asset.browser_download_url}: ${response.data}`,
+            );
+        }
+        const redirectedResponse = await octo.request("GET", {
+            url: location,
+            headers: {
+                accept: "application/octet-stream", // Required for downloading binary files
+            },
+        });
+        if (redirectedResponse.status === 200) {
+            return Buffer.from(
+                redirectedResponse.data as unknown as ArrayBuffer,
+            );
+        }
     }
 
-    return Buffer.from(response.data as unknown as ArrayBuffer);
+    throw new Error(
+        `Failed to download asset ${asset.name} from ${asset.browser_download_url}: ${response.data}`,
+    );
 }
