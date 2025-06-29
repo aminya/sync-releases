@@ -40,7 +40,7 @@ async function main() {
     endGroup();
 
     // Sync the release assets
-    await syncRelease(sourceRelease, destRelease, destOcto, destRepo);
+    await syncRelease(sourceRelease, destRelease, destOcto, destRepo, tokens[0]);
   } catch (error: unknown) {
     console.error("An error occurred:", error);
     if (error instanceof Error) {
@@ -133,12 +133,11 @@ async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string 
 }
 
 
-async function syncRelease(sourceRelease: ReleaseData, destRelease: ReleaseData, destOcto: GitHubClient, destRepo: RepositoryName) {
+async function syncRelease(sourceRelease: ReleaseData, destRelease: ReleaseData, destOcto: GitHubClient, destRepo: RepositoryName, sourceToken: string) {
   info(`Syncing release ${sourceRelease.tag_name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`);
 
   // Create a temporary directory for the download
-  const downloadDir = join(tmpdir(), "sync-release", `${sourceRelease.id}-${destRelease.tag_name}`);
-  await fs.mkdir(downloadDir, { recursive: true });
+  const downloadDir = await prepareSync(sourceRelease, destRelease);
 
   // Sync the assets from the source release to the destination release
   const assetPromises = sourceRelease.assets.map(async (asset) => {
@@ -150,32 +149,52 @@ async function syncRelease(sourceRelease: ReleaseData, destRelease: ReleaseData,
     }
 
     // Download the source asset to a temporary file
-    info(`Downloading asset ${asset.name} from ${asset.browser_download_url}`);
-    const dl = new DownloaderHelper(asset.browser_download_url, downloadDir, { fileName: asset.name })
-    dl.on("error", async (dlErr) => {
-      throw new Error(`Failed to download ${asset.browser_download_url}: ${dlErr}`)
-    })
-    await dl.start()
-
-    // Read the file content as a buffer
-    info(`Reading file content as a buffer`);
-    const fileContent = await fs.readFile(join(downloadDir, asset.name));
+    await downloadAsset(asset, downloadDir, sourceToken);
 
     // Upload the asset to the destination release
-    info(`Uploading asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`);
-    await destOcto.rest.repos.uploadReleaseAsset({
-      owner: destRepo.owner,
-      repo: destRepo.repo,
-      release_id: destRelease.id,
-      name: asset.name,
-      label: asset.label ?? undefined,
-      data: fileContent as unknown as string,
-      headers: {
-        "content-length": asset.size,
-        "content-type": asset.content_type ?? "application/octet-stream",
-      },
-    });
+    await uploadAsset(asset, destRelease, destRepo, destOcto, downloadDir);
     endGroup();
   });
   await Promise.all(assetPromises);
 }
+
+async function prepareSync(sourceRelease: ReleaseData, destRelease: ReleaseData) {
+  const downloadDir = join(tmpdir(), "sync-release", `${sourceRelease.id}-${destRelease.tag_name}`);
+  await fs.mkdir(downloadDir, { recursive: true });
+  return downloadDir;
+}
+
+async function uploadAsset(asset: ReleaseData["assets"][number], destRelease: ReleaseData, destRepo: RepositoryName, destOcto: GitHubClient, sourceDir: string) {
+  // Read the file content as a buffer
+  info(`Reading file content as a buffer`);
+  const fileContent = await fs.readFile(join(sourceDir, asset.name));
+
+  info(`Uploading asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`);
+  await destOcto.rest.repos.uploadReleaseAsset({
+    owner: destRepo.owner,
+    repo: destRepo.repo,
+    release_id: destRelease.id,
+    name: asset.name,
+    label: asset.label ?? undefined,
+    data: fileContent as unknown as string,
+    headers: {
+      "content-length": asset.size,
+      "content-type": asset.content_type ?? "application/octet-stream",
+    },
+  });
+}
+
+async function downloadAsset(asset: ReleaseData["assets"][number], downloadDir: string, token: string) {
+  info(`Downloading asset ${asset.name} from ${asset.browser_download_url}`);
+  const dl = new DownloaderHelper(asset.browser_download_url, downloadDir, {
+    fileName: asset.name,
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  dl.on("error", async (dlErr) => {
+    throw new Error(`Failed to download ${asset.browser_download_url}: ${dlErr}`);
+  });
+  await dl.start();
+}
+
