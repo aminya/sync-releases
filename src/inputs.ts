@@ -51,17 +51,13 @@ function parseOwnerRepo(input: string | undefined): RepositoryName | undefined {
   return { owner, repo };
 }
 
-export function getTagNames(): [string, string | undefined] {
+export function getTagNames(): [string | "latest", string | undefined] {
   // Get the tag to sync
   const sourceTagInput = getInput("tag", { required: false }) || process.env.GITHUB_REF;
   const destinationTagInput = getInput("destination-tag", { required: false }) || sourceTagInput;
 
-  const sourceTag = parseTag(sourceTagInput);
+  const sourceTag = parseTag(sourceTagInput) ?? "latest";
   const destinationTag = parseTag(destinationTagInput);
-
-  if (!sourceTag) {
-    throw new Error("The provided tag is not valid. Please provide a valid tag or ensure GITHUB_REF is set, or use 'latest' as a default.");
-  }
 
   return [sourceTag, destinationTag];
 }

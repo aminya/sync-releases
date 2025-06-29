@@ -25,7 +25,7 @@ async function main() {
     if (sourceRelease === undefined) {
       throw new Error(`Source release ${sourceTag} on ${sourceRepo.owner}/${sourceRepo.repo} does not exist`);
     }
-    const destinationTag = maybeDestinationTag || sourceRelease.tag_name;
+    const destinationTag = maybeDestinationTag ?? sourceRelease.tag_name;
 
     // Get the destination release or create it if it doesn't exist
     const destRelease = await getRelease(destOcto, destRepo, destinationTag) ??
@@ -83,7 +83,7 @@ async function createRelease(
   }
 }
 
-async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string): Promise<ReleaseData | undefined> {
+async function getRelease(octo: GitHubClient, repo: RepositoryName, tag: string | "latest"): Promise<ReleaseData | undefined> {
   try {
     const release =
       tag === "latest"
