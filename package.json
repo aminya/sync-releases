@@ -20,8 +20,7 @@
         "@biomejs/biome": "1.9.4",
         "@octokit/core": "^7.0.2",
         "@octokit/plugin-rest-endpoint-methods": "^16.0.0",
-        "@octokit/plugin-retry": "^8.0.1",
-        "node-downloader-helper": "^2.1.9"
+        "@octokit/plugin-retry": "^8.0.1"
     },
     "devDependencies": {
         "@tsconfig/node20": "^20.1.6",

@@ -1,10 +1,6 @@
-import { tmpdir } from "os";
 import { endGroup, info, startGroup, warning } from "@actions/core";
 import type { getOctokit } from "@actions/github";
 import type { RestEndpointMethodTypes } from "@octokit/plugin-rest-endpoint-methods";
-import fs from "fs/promises";
-import { DownloaderHelper } from "node-downloader-helper";
-import { join } from "path/posix";
 import type { RepositoryName } from "./inputs.js";
 
 export type GitHubClient = ReturnType<typeof getOctokit>;
@@ -105,9 +101,6 @@ export async function syncRelease(
         `Syncing release ${sourceRelease.tag_name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`,
     );
 
-    // Create a temporary directory for the download
-    const downloadDir = await prepareSync(sourceRelease, destRelease);
-
     // Sync the assets from the source release to the destination release
     const assetPromises = sourceRelease.assets.map(async (asset) => {
         info(
@@ -120,26 +113,13 @@ export async function syncRelease(
         }
 
         // Download the source asset to a temporary file
-        await downloadAsset(asset, sourceRepo, sourceOcto, downloadDir, token);
+        const fileContent = await downloadAsset(asset, sourceRepo, sourceOcto);
 
         // Upload the asset to the destination release
-        await uploadAsset(asset, destRelease, destRepo, destOcto, downloadDir);
+        await uploadAsset(asset, destRelease, destRepo, destOcto, fileContent);
     });
     await Promise.all(assetPromises);
     endGroup();
-}
-
-async function prepareSync(
-    sourceRelease: ReleaseData,
-    destRelease: ReleaseData,
-) {
-    const downloadDir = join(
-        tmpdir(),
-        "sync-release",
-        `${sourceRelease.id}-${destRelease.tag_name}`,
-    );
-    await fs.mkdir(downloadDir, { recursive: true });
-    return downloadDir;
 }
 
 async function uploadAsset(
@@ -147,12 +127,8 @@ async function uploadAsset(
     destRelease: ReleaseData,
     destRepo: RepositoryName,
     destOcto: GitHubClient,
-    sourceDir: string,
+    fileContent: Buffer,
 ) {
-    // Read the file content as a buffer
-    info("Reading file content as a buffer");
-    const fileContent = await fs.readFile(join(sourceDir, asset.name));
-
     info(
         `Uploading asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`,
     );
@@ -174,15 +150,16 @@ async function downloadAsset(
     asset: Asset,
     repo: RepositoryName,
     octo: GitHubClient,
-    downloadDir: string,
-    token: string,
-) {
+): Promise<Buffer> {
     info(`Downloading asset ${asset.name} from ${asset.browser_download_url}`);
 
     const response = await octo.rest.repos.getReleaseAsset({
         owner: repo.owner,
         repo: repo.repo,
         asset_id: asset.id,
+        headers: {
+            accept: "application/octet-stream", // Required for downloading binary files
+        },
     });
     if (response.status !== 200) {
         throw new Error(
@@ -190,16 +167,5 @@ async function downloadAsset(
         );
     }
 
-    const dl = new DownloaderHelper(asset.browser_download_url, downloadDir, {
-        fileName: asset.name,
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    dl.on("error", async (dlErr) => {
-        throw new Error(
-            `Failed to download ${asset.browser_download_url}: ${dlErr}`,
-        );
-    });
-    await dl.start();
+    return Buffer.from(response.data as unknown as ArrayBuffer);
 }

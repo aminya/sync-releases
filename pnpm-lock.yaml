@@ -26,9 +26,6 @@ importers:
       '@octokit/plugin-retry':
         specifier: ^8.0.1
         version: 8.0.1(@octokit/core@7.0.2)
-      node-downloader-helper:
-        specifier: ^2.1.9
-        version: 2.1.9
     devDependencies:
       '@tsconfig/node20':
         specifier: ^20.1.6
@@ -408,11 +405,6 @@ packages:
   memorystream@0.3.1:
     resolution: {integrity: sha512-S3UwM3yj5mtUSEfP41UZmt/0SCoVYUcU1rkXv+BQ5Ig8ndL4sPoJNBUJERafdPb5jjHJGuMgytgKvKIf58XNBw==}
     engines: {node: '>= 0.10.0'}
-
-  node-downloader-helper@2.1.9:
-    resolution: {integrity: sha512-FSvAol2Z8UP191sZtsUZwHIN0eGoGue3uEXGdWIH5228e9KH1YHXT7fN8Oa33UGf+FbqGTQg3sJfrRGzmVCaJA==}
-    engines: {node: '>=14.18'}
-    hasBin: true
 
   npm-normalize-package-bin@4.0.0:
     resolution: {integrity: sha512-TZKxPvItzai9kN9H/TkmCtx/ZN/hvr3vUycjlfmH0ootY9yFBzNOpiXAdIn1Iteqsvk4lQn6B5PTrt+n6h8k/w==}
@@ -800,8 +792,6 @@ snapshots:
   json-parse-even-better-errors@4.0.0: {}
 
   memorystream@0.3.1: {}
-
-  node-downloader-helper@2.1.9: {}
 
   npm-normalize-package-bin@4.0.0: {}
 
