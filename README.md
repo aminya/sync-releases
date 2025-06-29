@@ -6,6 +6,42 @@ It will create a new release in the destination repository if it doesn't exist, 
 
 ## Usage
 
+### Example Workflow
+
+The following workflow will sync the latest release from the source repository to the current repository on tags or workflow dispatch.
+
+```yaml
+name: Sync Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to sync"
+        required: true
+        default: "latest"
+  push:
+    tags:
+      - "*"
+
+# Ensure the action has write permissions to the current repository
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy Release
+        uses: aminya/sync-releases@v1
+        with:
+          source: "source-owner/source-repo"
+          destination: "destination-owner/destination-repo"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          destination-token: ${{ secrets.DESTINATION_GITHUB_TOKEN }}
+          tag: ${{ inputs.tag }}
+```
+
 ### Syncing From Current Repository to Another
 
 ```yaml
@@ -24,6 +60,13 @@ It will create a new release in the destination repository if it doesn't exist, 
   with:
     source: source-owner/source-repo
     source-token: ${{ secrets.SOURCE_GITHUB_TOKEN }}
+```
+
+Ensure the action has write permissions to the current repository by setting the `permissions` key in the workflow.
+
+```yaml
+permissions:
+  contents: write
 ```
 
 ### Syncing From One Repository to Another Repository with a Specific Tag and Destination Tag
