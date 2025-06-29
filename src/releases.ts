@@ -132,18 +132,37 @@ async function uploadAsset(
     info(
         `Uploading asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}`,
     );
-    await destOcto.rest.repos.uploadReleaseAsset({
-        owner: destRepo.owner,
-        repo: destRepo.repo,
-        release_id: destRelease.id,
-        name: asset.name,
-        label: asset.label ?? undefined,
-        data: fileContent as unknown as string,
-        headers: {
-            "content-length": asset.size,
-            "content-type": asset.content_type ?? "application/octet-stream",
-        },
-    });
+    try {
+        await destOcto.rest.repos.uploadReleaseAsset({
+            owner: destRepo.owner,
+            repo: destRepo.repo,
+            release_id: destRelease.id,
+            name: asset.name,
+            label: asset.label ?? undefined,
+            data: fileContent as unknown as string,
+            headers: {
+                "content-length": asset.size,
+                "content-type":
+                    asset.content_type ?? "application/octet-stream",
+            },
+        });
+    } catch (error) {
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "status" in error &&
+            error.status === 422
+        ) {
+            // TODO override the asset
+            warning(
+                `Asset ${asset.name} already exists on ${destRepo.owner}/${destRepo.repo}, skipping`,
+            );
+            return;
+        }
+        throw new Error(
+            `Failed to upload asset ${asset.name} to ${destRelease.tag_name} on ${destRepo.owner}/${destRepo.repo}: ${error}`,
+        );
+    }
 }
 
 async function downloadAsset(
